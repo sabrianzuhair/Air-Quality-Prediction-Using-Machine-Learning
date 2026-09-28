@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirVision AI | Kualitas Udara</title>
+    
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+   
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.6s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+           
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+
+        
+        .progress-ring__circle {
+            transition: stroke-dashoffset 1s ease-in-out, stroke 0.3s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+       
+        .loader-dots div {
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        .loader-dots div:nth-child(1) { left: 8px; animation: loader-dots1 0.6s infinite; }
+        .loader-dots div:nth-child(2) { left: 8px; animation: loader-dots2 0.6s infinite; }
+        .loader-dots div:nth-child(3) { left: 32px; animation: loader-dots2 0.6s infinite; }
+        .loader-dots div:nth-child(4) { left: 56px; animation: loader-dots3 0.6s infinite; }
+        @keyframes loader-dots1 { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes loader-dots3 { 0% { transform: scale(1); } 100% { transform: scale(0); } }
+        @keyframes loader-dots2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } }
+
+        
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+
+        
+        #map {
+            z-index: 1;
+        }
+
+        .leaflet-popup-content {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+        }
+
+        .leaflet-popup-content b {
+            color: #0c4a6e;
+        }
+
+        .custom-marker {
+            background: transparent !important;
+            border: none !important;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+   
+    <nav class="sticky top-0 z-50 glass-panel border-b border-white/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-tr from-brand-600 to-cyan-500 text-white p-2 rounded-xl shadow-lg shadow-brand-500/30">
+                        <i class="fa-solid fa-cloud-bolt text-lg"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-slate-800">AirVision<span class="text-brand-600">AI</span></span>
+                </div>
+                <div class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-white/50 border border-white text-xs font-medium text-slate-500">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    API Status: <span id="api-status">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    
+    <main class="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-10">
+
+        
+        <header class="text-center space-y-3 animate-fade-in">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
+                Prediksi Kualitas Udara
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-cyan-500">Real-Time</span>
+            </h1>
+            <p class="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+                Pantau polusi udara di kota Anda dengan presisi tinggi menggunakan teknologi Machine Learning.
+            </p>
+        </header>
+
+        
+        <div class="max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s;">
+            <div class="glass-card p-2 rounded-2xl flex flex-col sm:flex-row gap-2 shadow-xl shadow-brand-900/5">
+                <div class="relative flex-grow group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <select id="city-select" class="block w-full pl-11 pr-10 py-4 bg-transparent border-transparent focus:border-transparent focus:ring-0 text-slate-700 font-semibold cursor-pointer rounded-xl hover:bg-slate-50 transition-colors">
+                        <option value="" disabled selected>Pilih lokasi kota...</option>
+                    </select>
+                </div>
+                <button id="btn-check" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-4 px-8 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 min-w-[140px]">
+                    <span id="btn-text">Analisis</span>
+                    
+                    <div id="btn-loader" class="loader-dots relative w-16 h-4 hidden"><div></div><div></div><div></div><div></div></div>
+                </button>
+            </div>
+            
+            <div id="error-container" class="hidden mt-4 mx-auto max-w-md bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-3 shadow-sm animate-fade-in">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="error-message">Error message here.</span>
+            </div>
+        </div>
+
+        
+        <div id="map-container" class="hidden animate-slide-up" style="animation-delay: 0.15s;">
+            <div class="glass-card rounded-3xl p-4 mb-6">
+                <h3 class="font-bold text-slate-700 mb-4 text-center">Pilih Kota di Peta</h3>
+                <div id="map" class="h-96 rounded-2xl overflow-hidden"></div>
+            </div>
+        </div>
+
+        
+        <div id="dashboard-content" class="hidden animate-slide-up" style="animation-delay: 0.2s;">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                
+                <div class="lg:col-span-4 space-y-6">
+                   
+                    <div class="glass-card rounded-3xl p-8 text-center relative overflow-hidden group">
+                        
+                        <div id="glow-bg" class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full opacity-20 bg-gradient-to-b from-green-400 to-transparent transition-colors duration-700 blur-2xl -z-10"></div>
+
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">Indeks Kualitas Udara (AQI)</h3>
+                        
+                        
+                        <div class="relative w-48 h-48 mx-auto mb-6">
+                            <svg class="w-full h-full" viewBox="0 0 120 120">
+                                
+                                <circle class="text-slate-100" stroke-width="8" stroke="currentColor" fill="transparent" r="52" cx="60" cy="60" />
+                               
+                                <circle id="aqi-ring" class="text-green-500 progress-ring__circle" stroke-width="8" stroke-linecap="round" stroke="currentColor" fill="transparent" r="52" cx="60" cy="60" stroke-dasharray="326.72" stroke-dashoffset="326.72" />
+                            </svg>
+                            
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span id="result-aqi-actual" class="text-5xl font-extrabold text-slate-800 tracking-tighter">--</span>
+                                <span class="text-xs font-medium text-slate-400 mt-1">US AQI</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div id="result-category" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 font-bold text-sm transition-colors duration-500">
+                                <span class="w-2 h-2 rounded-full bg-current"></span>
+                                <span>--</span>
+                            </div>
+                            <h2 id="result-city" class="text-2xl font-bold text-slate-800">--</h2>
+                        </div>
+                    </div>
+
+                    
+                    <div class="glass-card rounded-2xl p-6 flex items-center justify-between border-l-4 border-brand-500">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase">Prediksi AI (1 Jam)</p>
+                            <p class="text-sm text-slate-500 mt-1">Forecast Machine Learning</p>
+                        </div>
+                        <div class="text-right">
+                            <p id="result-aqi-predicted" class="text-3xl font-bold text-brand-600">--</p>
+                            <p class="text-xs text-brand-400 font-medium">AQI</p>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    
+                   
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        
+                        <div class="glass-card rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-xl shadow-sm">
+                                <i class="fa-solid fa-temperature-half"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-400 font-semibold uppercase">Suhu</p>
+                                <p id="weather-temp" class="text-xl font-bold text-slate-700">--°C</p>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-card rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center text-xl shadow-sm">
+                                <i class="fa-solid fa-droplet"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-400 font-semibold uppercase">Kelembapan</p>
+                                <p id="weather-humidity" class="text-xl font-bold text-slate-700">--%</p>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-card rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-500 flex items-center justify-center text-xl shadow-sm">
+                                <i class="fa-solid fa-wind"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-400 font-semibold uppercase">Angin</p>
+                                <p id="weather-wind" class="text-xl font-bold text-slate-700">-- m/s</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div class="glass-card rounded-3xl p-6 flex-grow flex flex-col">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-slate-700">Analisis Perbandingan</h3>
+                            <span class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-500">Aktual vs Prediksi</span>
+                        </div>
+                        <div class="chart-wrapper flex-grow">
+                            <canvas id="aqiComparisonChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400">Data terakhir: <span id="data-timestamp" class="font-mono text-slate-500">--</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+        <div id="empty-state" class="text-center py-16 animate-fade-in opacity-60">
+            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <i class="fa-solid fa-map-location-dot text-4xl text-slate-300"></i>
+            </div>
+            <h3 class="text-lg font-medium text-slate-600">Belum ada data ditampilkan</h3>
+            <p class="text-slate-400 text-sm mt-1">Silakan pilih kota di atas untuk memulai analisis.</p>
+        </div>
+
+    </main>
+
+    
+    <footer class="mt-auto py-8 text-center text-slate-400 text-sm">
+        <p>&copy; 2025 AirVision AI Project. Designed with <i class="fa-solid fa-heart text-red-400 mx-1"></i> for Clean Air.</p>
+    </footer>
+
+    
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:5000';
+        
+        
+        const AQI_THEME = {
+            Good: { color: 'text-green-500', bg: 'bg-green-100', glow: 'from-green-400' },
+            Moderate: { color: 'text-yellow-500', bg: 'bg-yellow-100', glow: 'from-yellow-400' },
+            Unhealthy: { color: 'text-red-500', bg: 'bg-red-100', glow: 'from-red-400' },
+            Default: { color: 'text-slate-400', bg: 'bg-slate-100', glow: 'from-slate-200' }
+        };
+
+        let myChart = null;
+        
+       
+        let map = null;
+        let cityMarkers = [];
+
+        
+        const els = {
+            citySelect: document.getElementById('city-select'),
+            btnCheck: document.getElementById('btn-check'),
+            btnText: document.getElementById('btn-text'),
+            btnLoader: document.getElementById('btn-loader'),
+            errorContainer: document.getElementById('error-container'),
+            errorMessage: document.getElementById('error-message'),
+            dashboard: document.getElementById('dashboard-content'),
+            emptyState: document.getElementById('empty-state'),
+            apiStatus: document.getElementById('api-status'),
+            
+            resCity: document.getElementById('result-city'),
+            resAqiActual: document.getElementById('result-aqi-actual'),
+            resAqiPredicted: document.getElementById('result-aqi-predicted'),
+            resCategory: document.getElementById('result-category'),
+            resTimestamp: document.getElementById('data-timestamp'),
+            
+            aqiRing: document.getElementById('aqi-ring'),
+            glowBg: document.getElementById('glow-bg'),
+            
+            weaTemp: document.getElementById('weather-temp'),
+            weaHumid: document.getElementById('weather-humidity'),
+            weaWind: document.getElementById('weather-wind'),
+        };
+
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initCities();
+            checkHealth();
+            Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+            Chart.defaults.color = '#64748b';
+        });
+
+        els.btnCheck.addEventListener('click', () => {
+            const city = els.citySelect.value;
+            if (city) fetchData(city);
+        });
+
+      
+        function initMap() {
+           
+            document.getElementById('map-container').classList.remove('hidden');
+            
+            
+            map = L.map('map').setView([-2.5, 118], 5);
+            
+           
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18,
+            }).addTo(map);
+            
+           
+            addCityMarkers();
+        }
+
+        function addCityMarkers() {
+           
+            cityMarkers.forEach(marker => marker.remove());
+            cityMarkers = [];
+            
+            
+            fetch(`${API_BASE_URL}/api/cities`)
+                .then(res => res.json())
+                .then(data => {
+                    const cities = data.cities || [];
+                    
+                    cities.forEach(city => {
+                        
+                        const cityName = typeof city === 'string' ? city : city.name;
+                        const coords = typeof city === 'object' ? 
+                            { lat: city.lat, lon: city.lon } : 
+                            getDefaultCoords(cityName);
+                        
+                       
+                        const customIcon = L.divIcon({
+                            html: `<div class="bg-white p-2 rounded-full shadow-lg border border-slate-200 cursor-pointer hover:scale-110 transition-transform">
+                                      <i class="fa-solid fa-map-pin text-brand-600"></i>
+                                   </div>`,
+                            className: 'custom-marker',
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 40]
+                        });
+                        
+                        
+                        const marker = L.marker([coords.lat, coords.lon], { icon: customIcon })
+                            .addTo(map)
+                            .bindPopup(`<b>${cityName}</b><br>Klik untuk analisis AQI`);
+                        
+                        
+                        marker.on('click', () => {
+                            
+                            els.citySelect.value = cityName;
+                            
+                            fetchData(cityName);
+                           
+                            marker.closePopup();
+                        });
+                        
+                        cityMarkers.push(marker);
+                    });
+                    
+                   
+                    if (cityMarkers.length > 0) {
+                        const group = new L.featureGroup(cityMarkers);
+                        map.fitBounds(group.getBounds().pad(0.1));
+                    }
+                })
+                .catch(err => {
+                    console.warn("Gagal memuat marker peta:", err);
+                });
+        }
+
+        
+        function getDefaultCoords(cityName) {
+            const coordMap = {
+                "Jakarta": { lat: -6.2, lon: 106.8 },
+                "Surabaya": { lat: -7.25, lon: 112.75 },
+                "Bandung": { lat: -6.91, lon: 107.61 },
+                "Medan": { lat: 3.58, lon: 98.67 },
+                "Semarang": { lat: -6.99, lon: 110.42 },
+                "Yogyakarta": { lat: -7.8, lon: 110.36 },
+                "Denpasar": { lat: -8.65, lon: 115.22 },
+                "Makassar": { lat: -5.14, lon: 119.42 },
+                "Palembang": { lat: -2.99, lon: 104.76 },
+                "Bekasi": { lat: -6.23, lon: 106.99 }
+            };
+            
+            return coordMap[cityName] || { lat: -2.5, lon: 118 };
+        }
+
+        
+        async function checkHealth() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/health`);
+                if (res.ok) {
+                    els.apiStatus.textContent = "System Online";
+                    els.apiStatus.className = "text-green-600 font-semibold";
+                }
+            } catch (e) {
+                els.apiStatus.textContent = "System Offline";
+                els.apiStatus.className = "text-red-500 font-semibold";
+            }
+        }
+
+        async function initCities() {
+            els.btnCheck.disabled = true;
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/cities`);
+                const data = await res.json();
+                
+                els.citySelect.innerHTML = '<option value="" disabled selected>Pilih lokasi kota...</option>';
+                
+                
+                data.cities.forEach(city => {
+                    const cityName = typeof city === 'string' ? city : city.name;
+                    const opt = document.createElement('option');
+                    opt.value = cityName;
+                    opt.textContent = cityName;
+                    els.citySelect.appendChild(opt);
+                });
+                
+                
+                initMap();
+                
+                els.btnCheck.disabled = false;
+            } catch (e) {
+                showError("Gagal memuat daftar kota. Pastikan server backend berjalan.");
+            }
+        }
+
+        async function fetchData(city) {
+            setLoading(true);
+            hideError();
+            
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/aqi?city=${encodeURIComponent(city)}`);
+                if (!res.ok) throw new Error("Gagal mengambil data prediksi.");
+                
+                const data = await res.json();
+                renderData(data);
+                
+            } catch (e) {
+                showError(e.message);
+                els.dashboard.classList.add('hidden');
+                els.emptyState.classList.remove('hidden');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+       
+        function renderData(data) {
+            els.emptyState.classList.add('hidden');
+            els.dashboard.classList.remove('hidden');
+
+            
+            els.resCity.textContent = data.city;
+            els.resAqiActual.textContent = data.aqi_actual;
+
+            
+            const primaryPrediction = (typeof data.aqi_predicted_rf === 'number') 
+                                      ? data.aqi_predicted_rf 
+                                      : 0;
+            els.resAqiPredicted.textContent = primaryPrediction.toFixed(1);
+            
+            els.resCategory.innerHTML = `<span class="w-2 h-2 rounded-full bg-current"></span> ${data.category}`;
+            
+            els.weaTemp.textContent = `${data.weather.temperature}°C`;
+            els.weaHumid.textContent = `${data.weather.humidity}%`;
+            els.weaWind.textContent = `${data.weather.wind_speed} m/s`;
+            
+            const date = new Date(data.timestamp);
+            els.resTimestamp.textContent = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' }) + " WIB";
+
+            
+            let theme = AQI_THEME.Default;
+           
+            const catLower = (data.category || '').toLowerCase();
+            
+            if (catLower.includes('good')) theme = AQI_THEME.Good;
+            else if (catLower.includes('moderate')) theme = AQI_THEME.Moderate;
+            else if (catLower.includes('unhealthy')) theme = AQI_THEME.Unhealthy;
+
+            
+            els.aqiRing.setAttribute('class', `progress-ring__circle ${theme.color} transition-all duration-1000`);
+            els.resCategory.className = `inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-sm transition-colors duration-500 ${theme.bg} ${theme.color.replace('text-', 'text-opacity-80 text-')}`;
+            els.glowBg.className = `absolute top-0 left-1/2 -translate-x-1/2 w-full h-full opacity-20 bg-gradient-to-b ${theme.glow} to-transparent transition-colors duration-700 blur-2xl -z-10`;
+
+            
+            const circleLength = 326.72;
+            const percent = Math.min(data.aqi_actual / 300, 1);
+            const offset = circleLength - (percent * circleLength);
+            els.aqiRing.style.strokeDashoffset = offset;
+
+            
+            updateChart(data);
+        }
+
+        function updateChart(data) {
+            const ctx = document.getElementById('aqiComparisonChart').getContext('2d');
+            
+            if (myChart) myChart.destroy();
+
+            
+            const valActual = data.aqi_actual || 0;
+            const valRF = (typeof data.aqi_predicted_rf === 'number') ? data.aqi_predicted_rf : 0;
+            const valLR = (typeof data.aqi_predicted_lr === 'number') ? data.aqi_predicted_lr : 0;
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  
+                    labels: ['Aktual', 'Random Forest', 'Linear Reg.'],
+                    datasets: [{
+                       
+                        data: [valActual, valRF, valLR],
+                        backgroundColor: [
+                            'rgba(148, 163, 184, 0.8)', 
+                            'rgba(14, 165, 233, 0.9)', 
+                            'rgba(99, 102, 241, 0.9)'  
+                        ],
+                        borderRadius: 12,
+                        borderSkipped: false,
+                        barThickness: 40, 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 14, weight: 'bold' },
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: (ctx) => `AQI: ${Number(ctx.raw).toFixed(1)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f1f5f9',
+                                borderDash: [5, 5]
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        
+        function setLoading(state) {
+            if(state) {
+                els.btnText.classList.add('hidden');
+                els.btnLoader.classList.remove('hidden');
+                els.btnCheck.disabled = true;
+                els.citySelect.disabled = true;
+                els.btnCheck.classList.add('opacity-80', 'cursor-not-allowed');
+            } else {
+                els.btnText.classList.remove('hidden');
+                els.btnLoader.classList.add('hidden');
+                els.btnCheck.disabled = false;
+                els.citySelect.disabled = false;
+                els.btnCheck.classList.remove('opacity-80', 'cursor-not-allowed');
+            }
+        }
+
+        function showError(msg) {
+            els.errorContainer.classList.remove('hidden');
+            els.errorMessage.textContent = msg;
+            setTimeout(() => els.errorContainer.classList.add('hidden'), 5000);
+        }
+        
+        function hideError() {
+            els.errorContainer.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

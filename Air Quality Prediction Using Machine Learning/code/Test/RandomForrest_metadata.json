@@ -1,0 +1,167 @@
+{
+  "generated_at": "2025-12-23T13:17:17.831172Z",
+  "model_type": "Random Forest Regressor",
+  "model_version": "v3-random-forest",
+  "model_path": "C:\\Air Quality Prediction Using Machine Learning\\code\\Test\\random_forest_aqi.joblib",
+  "dataset_path": "C:\\Air Quality Prediction Using Machine Learning\\code\\Test\\dataset_cuaca_aqi.csv",
+  "dataset_rows": 360,
+  "dataset_scope": "multi_city",
+  "cities": [
+    "Bandung",
+    "Denpasar",
+    "Jakarta",
+    "Makassar",
+    "Malang",
+    "Medan",
+    "Palembang",
+    "Semarang",
+    "Surabaya",
+    "Yogyakarta"
+  ],
+  "num_cities": 10,
+  "dataset_date_range": {
+    "start": "2025-12-14 20:00:00",
+    "end": "2025-12-23 20:00:00"
+  },
+  "features": [
+    "temperature",
+    "humidity",
+    "wind_speed",
+    "pm25",
+    "pm10",
+    "city_Denpasar",
+    "city_Jakarta",
+    "city_Makassar",
+    "city_Malang",
+    "city_Medan",
+    "city_Palembang",
+    "city_Semarang",
+    "city_Surabaya",
+    "city_Yogyakarta"
+  ],
+  "metrics": {
+    "train_r2": 0.6899830916847864,
+    "test_r2": 0.7057963395095177,
+    "test_mae": 5.232097222939408,
+    "test_rmse": 6.219923991620984,
+    "oob_r2": 0.5874531925166214,
+    "n_train": 270,
+    "n_test": 90,
+    "n_features": 14,
+    "features": [
+      "temperature",
+      "humidity",
+      "wind_speed",
+      "pm25",
+      "pm10",
+      "city_Denpasar",
+      "city_Jakarta",
+      "city_Makassar",
+      "city_Malang",
+      "city_Medan",
+      "city_Palembang",
+      "city_Semarang",
+      "city_Surabaya",
+      "city_Yogyakarta"
+    ],
+    "feature_importances": [
+      0.09987108873393485,
+      0.06624491218893797,
+      0.05444295320370532,
+      0.25572604673975974,
+      0.03831474437804767,
+      0.027643761821789993,
+      0.01410926144085398,
+      0.06106355192951269,
+      0.020399977796050496,
+      0.22464450197011848,
+      0.08034515100475362,
+      0.017373374574148538,
+      0.017323302469457406,
+      0.02249737174892916
+    ],
+    "model_params": {
+      "n_estimators": 300,
+      "max_depth": 8,
+      "min_samples_split": 10,
+      "min_samples_leaf": 5,
+      "max_features": "sqrt",
+      "random_state": 42
+    }
+  },
+  "cross_validation": {
+    "cv_r2_mean": 0.7079432706206346,
+    "cv_r2_std": 0.023697857995605864,
+    "cv_mae_mean": 5.77724500386382,
+    "cv_mae_std": 0.580536206752403,
+    "cv_rmse_mean": 7.571784777394178,
+    "cv_rmse_std": 1.0439989694652898,
+    "n_splits": 5
+  },
+  "hyperparameters": {
+    "n_estimators": 300,
+    "max_depth": 8,
+    "min_samples_split": 10,
+    "min_samples_leaf": 5,
+    "max_features": "sqrt",
+    "random_state": 42
+  },
+  "feature_importances": [
+    {
+      "feature": "temperature",
+      "importance": 0.09987108873393485
+    },
+    {
+      "feature": "humidity",
+      "importance": 0.06624491218893797
+    },
+    {
+      "feature": "wind_speed",
+      "importance": 0.05444295320370532
+    },
+    {
+      "feature": "pm25",
+      "importance": 0.25572604673975974
+    },
+    {
+      "feature": "pm10",
+      "importance": 0.03831474437804767
+    },
+    {
+      "feature": "city_Denpasar",
+      "importance": 0.027643761821789993
+    },
+    {
+      "feature": "city_Jakarta",
+      "importance": 0.01410926144085398
+    },
+    {
+      "feature": "city_Makassar",
+      "importance": 0.06106355192951269
+    },
+    {
+      "feature": "city_Malang",
+      "importance": 0.020399977796050496
+    },
+    {
+      "feature": "city_Medan",
+      "importance": 0.22464450197011848
+    },
+    {
+      "feature": "city_Palembang",
+      "importance": 0.08034515100475362
+    },
+    {
+      "feature": "city_Semarang",
+      "importance": 0.017373374574148538
+    },
+    {
+      "feature": "city_Surabaya",
+      "importance": 0.017323302469457406
+    },
+    {
+      "feature": "city_Yogyakarta",
+      "importance": 0.02249737174892916
+    }
+  ]
+}

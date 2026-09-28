@@ -1,0 +1,60 @@
+{
+  "generated_at": "2025-12-23T13:16:24.769796Z",
+  "model_type": "Linear Regression",
+  "model_version": "v2-multicity",
+  "model_path": "C:\\Air Quality Prediction Using Machine Learning\\code\\Test\\linear_regression_aqi.joblib",
+  "dataset_path": "C:\\Air Quality Prediction Using Machine Learning\\code\\Test\\dataset_cuaca_aqi.csv",
+  "dataset_rows": 360,
+  "dataset_scope": "multi_city",
+  "cities": [
+    "Bandung",
+    "Denpasar",
+    "Jakarta",
+    "Makassar",
+    "Malang",
+    "Medan",
+    "Palembang",
+    "Semarang",
+    "Surabaya",
+    "Yogyakarta"
+  ],
+  "num_cities": 10,
+  "dataset_date_range": {
+    "start": "2025-12-14 20:00:00",
+    "end": "2025-12-23 20:00:00"
+  },
+  "features": [
+    "temperature",
+    "humidity",
+    "wind_speed",
+    "pm25",
+    "pm10",
+    "city_encoded"
+  ],
+  "metrics": {
+    "train_r2": 0.138553539247539,
+    "test_r2": -0.1389525561285434,
+    "test_mae": 10.724626377330553,
+    "test_rmse": 12.238096078559904,
+    "n_train": 270,
+    "n_test": 90,
+    "n_features": 6,
+    "features": [
+      "temperature",
+      "humidity",
+      "wind_speed",
+      "pm25",
+      "pm10",
+      "city_encoded"
+    ]
+  },
+  "cross_validation": {
+    "cv_r2_mean": 0.21029061328951668,
+    "cv_r2_std": 0.18893499065933872,
+    "cv_mae_mean": 10.621530445648851,
+    "cv_mae_std": 0.997309625881584,
+    "cv_rmse_mean": 12.218412298396101,
+    "cv_rmse_std": 0.9289059466071862,
+    "n_splits": 5
+  }
+}
